@@ -96,7 +96,7 @@ The situation where the user creates a new note using the single page version of
     Browser uses the previously fetched Javascript to update the page content and 
     includes the new note. OR
     Event handler pushes "notes_form" content into array and renders to browser.
-end note 
+    end note 
     ```
 - Diagram </br>
     ![Diagram](https://i.imgur.com/e9xBNQr.png)
