@@ -44,5 +44,15 @@ There are two ways by which the function can be referenced:
    ```
 The arrow function feature was added to JavaScript only a couple of years ago, with version ES6.
 
+## Object methods and "this"
+
+```js
+arto.greet()       // "hello, my name is Arto Hellas" gets printed
+
+const referenceToGreet = arto.greet
+referenceToGreet() // prints "hello, my name is undefined"
+```
+When calling the method through a reference, the method loses knowledge of what was the original this.
+
 
 
