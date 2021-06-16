@@ -3,15 +3,8 @@ import App from './App'
 
 let counter = 1
 
-const refresh = () => {
-  ReactDOM.render(<App counter={counter} />, 
-  document.getElementById('root'))
-}
 
-setInterval(() => {
-  refresh()
-  counter += 1
-}, 1000)
-
+ReactDOM.render(<App />, 
+document.getElementById('root'))
 //The re-rendering command has been wrapped inside of the refresh function to cut down on the amount of copy-pasted code.
 
