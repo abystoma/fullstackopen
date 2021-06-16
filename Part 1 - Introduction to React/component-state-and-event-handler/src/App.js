@@ -4,17 +4,20 @@ const App = (props) => {
   const [ counter, setCounter ] = useState(0)
   //The counter variable is assigned the initial value of state which is zero. 
   //The variable setCounter is assigned to a function that will be used to modify the state.
-
-  setTimeout(
-    () => setCounter(counter + 1),
-    1000
-  )
-  
-
-  console.log('rendering...', counter)
+  // const handleClick = () => {
+  //   console.log('clicked')
+  // }
 
   return (
-    <div>{counter}</div>
+    <div>
+      <div>{counter}</div>
+      <button onClick={() => setCounter(counter + 1)}>
+        plus
+      </button>
+      <button onClick={() => setCounter(0)}> 
+        zero
+      </button>
+    </div>
   )
 }
 
