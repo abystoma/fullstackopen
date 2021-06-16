@@ -1,32 +1,10 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react'
 
-const Hello = ({ name, age }) => {
-  //const {name, age} = props // for this pass props as parameter
-
-  const bornYear = () => new Date().getFullYear() - age
-
+const App = (props) => {
+  const {counter} = props
   return (
-    <div>
-      <p>
-        Hello {name}, you are {age} years old
-      </p>
-      <p>So you were probably born in {bornYear()}</p>
-    </div>
+    <div>{counter}</div>
   )
 }
 
-const App = () => {
-  const name = 'Peter'
-  const age = 10
-
-  return (
-    <div>
-      <h1>Greetings</h1>
-      <Hello name="Maya" age={26 + 10} />
-      <Hello name={name} age={age} />
-    </div>
-  )
-}
-
-export default App;
+export default App
