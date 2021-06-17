@@ -2,27 +2,26 @@ import React, { useState } from 'react'
 
 const App = (props) => {
   const [ counter, setCounter ] = useState(0)
-  //The counter variable is assigned the initial value of state which is zero. 
-  //The variable setCounter is assigned to a function that will be used to modify the state.
-  // const handleClick = () => {
-  //   console.log('clicked')
-  // }
 
+  const increaseByOne = () => setCounter(counter + 1)
+  
+  const setToZero = () => setCounter(0)
   return (
     <div>
       <div>{counter}</div>
-      <button onClick={() => setCounter(counter + 1)}>
+      <button onClick={increaseByOne}>
         plus
       </button>
-      <button onClick={() => setCounter(0)}> 
+      <button onClick={setToZero}> 
         zero
       </button>
     </div>
   )
+  //Here, the event handlers have been defined correctly. The value of the onClick attribute is a variable containing a reference to a function:
+{/* <button onClick={increaseByOne}> 
+  plus
+</button> */}
 }
 
 export default App
 
-// Every time the setCounter modifies the state it causes the component to re-render. 
-// The value of the state will be incremented again after one second, and this will continue to 
-// repeat for as long as the application is running.
