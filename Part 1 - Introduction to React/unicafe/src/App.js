@@ -1,26 +1,35 @@
 import React, { useState } from 'react'
 
-const Button = ({text, handleClick}) => {
+const Button = (props) => {
   return (
     <div>
-      <button onClick={handleClick}>{text}</button>
+      <button onClick={props.handleClick}>{props.text}</button>
     </div>
   );
 };
-
-const Display = ({text, number}) => {
+const Statistics = (props) => {
+  return (
+  <div>
+    <Total total= {props.total}/>
+    <Average good = {props.good} bad = {props.bad} total = {props.total}/>
+    <Positive good = {props.good} total = {props.total}/>
+ </div>
+ )
+  
+}
+const Display = (props) => {
   return(
-      <div>{text} {number}</div>
+      <div>{props.text} {props.number}</div>
   );
 }
-const Total = ({total}) => {
+const Total = (props) => {
   return (
-    <div>all {total}</div>
+    <div>all {props.total}</div>
   )
 }
 
-const Average = ({good, bad, total}) => {
-  let average = (good - bad) / total
+const Average = (props) => {
+  let average = (props.good - props.bad) / props.total
   if (isNaN(average)) {
     average = 0
   }
@@ -29,8 +38,8 @@ const Average = ({good, bad, total}) => {
   )
 }
 
-const Positive = ({good, total}) => {
-  let positive = (good / total) * 100
+const Positive = (props) => {
+  let positive = (props.good / props.total) * 100
   if (isNaN(positive)) {
     positive = 0
   }
@@ -67,9 +76,8 @@ const App = () => {
       <Display text="good" number={good} />
       <Display text="neutral" number={neutral} />
       <Display text="bad" number={bad} />
-      <Total total={total} />
-      <Average good={good} bad={bad} total={total} />
-      <Positive good={good} total={total} />
+      <Statistics good = {good} neutral = {neutral} bad = {bad} total = {total}/>
+
     </div>
   )
 }
