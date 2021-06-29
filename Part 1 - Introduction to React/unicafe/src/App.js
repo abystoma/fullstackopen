@@ -1,6 +1,17 @@
 import React, { useState } from 'react'
 
-const Statistic = (props) => <div>{props.text} {props.value}</div>
+const Statistic = (props) => {
+  return (
+    <tr>
+    <td>{props.text}</td>
+    <td>
+      {props.value}
+    </td>
+  </tr>
+  )
+
+
+}
 
 const Button = (props) => {
   return (
@@ -23,14 +34,19 @@ const Statistics = (props) => {
   return (
   <div>
     <h1>statistics</h1>
+    <table>
 
     <Statistic text="good" value={props.good}></Statistic>
     <Statistic text="netural" value={props.neutral}></Statistic>
     <Statistic text="bad" value={props.bad}></Statistic>
-    <Total total= {props.total}/>
-    <Average good = {props.good} bad = {props.bad} total = {props.total}/>
-    <Positive good = {props.good} total = {props.total}/>
-   
+    <Statistic text="all"value={<Total total= {props.total}/>}></Statistic>
+    <Statistic text="average"value={<Average good = {props.good} bad = {props.bad} total = {props.total}/>}></Statistic>
+    <Statistic text="percentage"value={<Positive good = {props.good} total = {props.total}/>}></Statistic>
+
+    
+    
+    </table>
+
  </div>
  )
   
@@ -38,7 +54,7 @@ const Statistics = (props) => {
 
 const Total = (props) => {
   return (
-    <div>all {props.total}</div>
+    <div>{props.total}</div>
   )
 }
 
@@ -48,7 +64,7 @@ const Average = (props) => {
     average = 0
   }
   return (
-    <div>average {average}</div>
+    <div>{average}</div>
   )
 }
 
@@ -58,7 +74,7 @@ const Positive = (props) => {
     positive = 0
   }
   return (
-    <div>positive {positive} %</div>
+    <div>{positive} %</div>
   )
 }
 const App = () => {
