@@ -13,7 +13,31 @@ const Display = ({text, number}) => {
       <div>{text} {number}</div>
   );
 }
+const Total = ({total}) => {
+  return (
+    <div>all {total}</div>
+  )
+}
 
+const Average = ({good, bad, total}) => {
+  let average = (good - bad) / total
+  if (isNaN(average)) {
+    average = 0
+  }
+  return (
+    <div>average {average}</div>
+  )
+}
+
+const Positive = ({good, total}) => {
+  let positive = (good / total) * 100
+  if (isNaN(positive)) {
+    positive = 0
+  }
+  return (
+    <div>positive {positive} %</div>
+  )
+}
 const App = () => {
   // save clicks of each button to its own state
   const [good, setGood] = useState(0)
@@ -31,6 +55,7 @@ const App = () => {
   const handleBadClick = () => {
     setBad(bad + 1);
   };
+  const total = good + neutral + bad
 
   return (
     <div>
@@ -42,6 +67,9 @@ const App = () => {
       <Display text="good" number={good} />
       <Display text="neutral" number={neutral} />
       <Display text="bad" number={bad} />
+      <Total total={total} />
+      <Average good={good} bad={bad} total={total} />
+      <Positive good={good} total={total} />
     </div>
   )
 }
