@@ -10,6 +10,7 @@ const Button = (props) => {
 const Anecdote = (props) => {
   return (
     <>
+      <h1>{props.title}</h1>
       <div>{props.text}</div>
       <p>has {props.votes} votes</p>
     </>
@@ -43,10 +44,18 @@ const App = () => {
 
   return (
     <div>
-      <Anecdote text={anecdotes[selected]} votes={votes[selected]} />
+      <Anecdote 
+      title={"Anecdote of the day"}
+      text={anecdotes[selected]} 
+      votes={votes[selected]} 
+      />
       <Button text="Next Anecdotes" handleClick={selectAnectode} />
       <Button text={"Vote"} handleClick={handleClickVote}/>
-
+      <Anecdote
+        title={"Anecdote with most votes"}
+        text={anecdotes[votes.indexOf(Math.max(...votes))]}
+        votes={votes[votes.indexOf(Math.max(...votes))]}
+      />
     </div>
   )
 }
