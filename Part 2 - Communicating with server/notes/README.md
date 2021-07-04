@@ -21,3 +21,42 @@ When called like this, i is assigned the value of the index of the position in t
 ```
 This is; however, not recommended and can create undesired problems even if it seems to be working just fine.
 
+## Forms
+
+```js
+const App = (props) => {
+const [notes, setNotes] = useState(props.notes)
+```
+The component uses the `useState` function to initialize the piece of state stored in `notes` with the array of notes passed in the props:
+
+We have added the `addNote` function as an event handler to the form element that will be called when the form is submitted, by clicking the submit button.
+
+The `event` parameter is the event that triggers the call to the event handler function:
+
+The event handler immediately calls the `event.preventDefault()` method, which prevents the default action of submitting a form. The default action would, among other things, cause the page to reload.
+```js
+const addNote = (event) => {
+  event.preventDefault()
+  onsole.log('button clicked', event.target)
+}
+```
+In order to enable editing of the input element, we have to register an event handler that synchronizes the changes made to the input with the component's state:
+
+```js
+  const handleNoteChange = (event) => {
+  console.log(event.target.value)
+  setNewNote(event.target.value)
+ }
+```
+We have now registered an event handler to the onChange attribute of the form's input element:
+
+```js
+<input
+  value={newNote}
+  onChange={handleNoteChange}
+/>
+```
+
+The `target` property of the event object now corresponds to the controlled input element and `event.target.value` refers to the input value of that element.
+
+
