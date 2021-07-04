@@ -5,6 +5,7 @@ const Course = ({ course }) => {
     <div>
       <Header course={course} />
       <Content course={course} />
+      <Total course={course} />
     </div>
   )
 }
@@ -15,6 +16,13 @@ const Header = ({ course }) => {
   )
 }
 
+const Total = ({ course }) => {
+  const sum = course.parts.map(course => course.exercises)
+  .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+  return (
+    <p><strong>total of {sum} exercises</strong></p>
+  ) 
+}
 
 const Part = ({ part }) => {
   return (
