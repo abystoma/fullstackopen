@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Person from './components/Persons'
 
 const App = () => {
   const [persons, setPersons] = useState([{ name: "Arto Hellas" }]);
@@ -6,11 +7,18 @@ const App = () => {
 
   const handleAddName = (event) => {
     event.preventDefault();
-    let oldPersons = [...persons];
-    oldPersons.push({ name: newName });
-    setPersons(oldPersons);
-    setNewName("");
-
+    if (
+      persons
+        .map(element => element.name.toLowerCase())
+        .includes(newName.toLowerCase())
+    ) {
+      window.alert(`${newName} is already added to phonebook`);
+    } else {
+      let oldPersons = [...persons];
+      oldPersons.push({ name: newName });
+      setPersons(oldPersons);
+      setNewName("");
+    }
   };
 
   return (
@@ -30,10 +38,10 @@ const App = () => {
       </form>
       <h2>Numbers</h2>
       {persons.map((person) => (
-        <div>{person.name}</div>
-      ))}
+        <Person key={person.id} person={person}/>
+      ))
+      }
     </div>
   );
 };
-
 export default App;
