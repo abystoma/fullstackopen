@@ -3,10 +3,12 @@ import Person from './components/Persons'
 
 const App = () => {
   const [ persons, setPersons ] = useState([
-    { name: 'Arto Hellas', number: '39-44-5323523' }
-  ]) 
+    {name: 'Arto Hellas', number: '39-44-5323523'}
+ ]) 
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
+  const [ filterPersons, setFilterPersons ] = useState(false)
+  const [ filteredPersons, setFilteredPersons ] = useState([])
 
   const handleAddName = (event) => {
     let oldPersons = [...persons];
@@ -21,16 +23,27 @@ const App = () => {
       return;
     } 
   
-    oldPersons.push({ name: newName, number: newNumber });
+    oldPersons.push({name: newName, number: newNumber});
     setPersons(oldPersons);
     setNewName("");
     setNewNumber("");
     
   };
-
+  const handleFilter = (event) => {
+    if(event.target.value !== '') {
+      setFilterPersons(true)
+      setFilteredPersons(persons.filter(person => person.name.toLowerCase() === event.target.value.toLowerCase()))
+    } else {
+      setFilterPersons(false)
+    }
+  }
   return (
     <div>
       <h2>Phonebook</h2>
+      <div>
+        filter shown with <input onChange={handleFilter}/>
+      </div>
+      <h2>Add new</h2>
       <form onSubmit={handleAddName}>
         <div>
           name:
@@ -53,12 +66,11 @@ const App = () => {
       </form>
       { /*<div>debug: {newName}</div> */}
       <h2>Numbers</h2>
-      {persons.map((person) => (
-        <Person key={person.name} 
-        person={person}/>
-      ))
-      }
-    </div>
-  );
-};
+      {filterPersons === false
+      ? persons.map(person => (<Person key={person.name} person={person}/>))
+      : filteredPersons.map(person => (<Person key={person.name} person = {person}/>))}
+      </div>
+    )
+
+    };
 export default App;
