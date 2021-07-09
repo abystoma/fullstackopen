@@ -62,10 +62,27 @@ The `target` property of the event object now corresponds to the controlled inpu
 
 
 # Getting data from server
-
+7
 Install JSON server globally: `npm install -g json-server`
 
 A global installation is not necessary. From the root directory of the app, we can run the json-server using the command npx: `npx json-server --port 3001 --watch db.json`
 
 Going forward, the idea will be to save the notes to the server, which in this case means saving to the json-server. The React code fetches the notes from the server and renders them to the screen. Whenever a new note is added to the application the React code also sends it to the server to make the new note persist in "memory".
 
+## npm
+
+We will use the promise based function [fetch](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch) to pull the data from the server. Fetch is a great tool. It is standardized and supported by all modern browsers.
+
+We will be using the `axios` library instead for communication between the browser and server. It functions like fetch, but is somewhat more pleasant to use. Another good reason to use axios is our getting familiar with adding external libraries, so-called npm packages, to React projects.
+
+**npm-commands should always be run in the project root directory**, which is where the package.json file can be found.
+
+ Install json-server as a development dependency (only used during development) by executing the command:
+ `npm install json-server --save-dev`
+
+Make a small addition to the scripts part of the package.json file:
+![image](https://i.imgur.com/VpjURWr.png)
+
+We can now conveniently, without parameter definitions, start the json-server from the project root directory with the command:
+
+`npm run server`
