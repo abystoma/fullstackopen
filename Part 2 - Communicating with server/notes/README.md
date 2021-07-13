@@ -86,3 +86,11 @@ Make a small addition to the scripts part of the package.json file:
 We can now conveniently, without parameter definitions, start the json-server from the project root directory with the command:
 
 `npm run server`
+
+The command npm install was used twice, but with slight differences:
+
+```
+npm install axios
+npm install json-server --save-dev
+```
+There is a fine difference in the parameters. axios is installed as a runtime dependency of the application, because the execution of the program requires the existence of the library. On the other hand, json-server was installed as a development dependency (--save-dev), since the program itself doesn't require it.
