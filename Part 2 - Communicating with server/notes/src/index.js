@@ -33,12 +33,8 @@ const notes = [
 ]
 
 
-axios
-  .get('http://localhost:3001/notes')
-  .then(response => {
-    const notes = response.data
-    ReactDOM.render(
-      <App notes={notes} />,
-      document.getElementById('root')
-    )
-  })
+
+ReactDOM.render(
+  <App notes={notes} />,
+  document.getElementById('root')
+)
