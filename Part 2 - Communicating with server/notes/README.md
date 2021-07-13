@@ -94,3 +94,70 @@ npm install axios
 npm install json-server --save-dev
 ```
 There is a fine difference in the parameters. axios is installed as a runtime dependency of the application, because the execution of the program requires the existence of the library. On the other hand, json-server was installed as a development dependency (--save-dev), since the program itself doesn't require it.
+
+## Axios and promises
+
+The library can be brought into use the same way other libraries, e.g. React, are, i.e. by using an appropriate import statement.
+
+**Note:** when the content of the file index.js changes, React does not notice that automatically so you must refresh the browser to see your changes! A simple workaround to make React notice the change automatically, is to create a file named .env in the root directory of the project and add this line `FAST_REFRESH=false`. Restart the app for the applied changes to take effect.
+
+A **Promise** is an object representing the eventual completion or failure of an asynchronous operation.
+
+In other words, a promise is an object that represents an asynchronous operation. A promise can have three distinct states:
+
+1. **The promise is pending:** It means that the final value (one of the following two) is not available yet.
+2. **The promise is fulfilled:** It means that the operation has completed and the final value is available, which generally is a successful operation. This state is sometimes also called resolved.
+3. **The promise is rejected:** It means that an error prevented the final value from being determined, which generally represents a failed operation.
+
+![image](https://imgur.com/WIHTgoE)
+
+If we open http://localhost:3000 in the browser, we see this in console
+
+The first promise in our example is fulfilled, representing a successful `axios.get('http://localhost:3001/notes')` request. The second one, however, is rejected, and the console tells us the reason. It looks like we were trying to make an HTTP GET request to a non-existent address.
+
+If, and when, we want to access the result of the operation represented by the promise, we must register an event handler to the promise. This is achieved using the method then:
+
+```js
+const promise = axios.get('http://localhost:3001/notes')
+
+promise.then(response => {
+  console.log(response)
+})
+```
+The following is printed in the console:
+![image](https://i.imgur.com/GGPuqnl.png)
+
+The JavaScript runtime environment calls the callback function registered by the `then` method providing it with a `response` object as a parameter. The `response` object contains all the essential data related to the response of an HTTP GET request, which would include the returned *data*, *status code*, and *headers*.
+
+```js
+axios
+  .get('http://localhost:3001/notes')
+  .then(response => {
+    const notes = response.data
+    console.log(notes)
+  })
+```
+The callback function now takes the data contained within the response, stores it in a variable and prints the notes to the console.
+
+The data returned by the server is plain text, basically just one long string. The axios library is still able to parse the data into a JavaScript array, since the server has specified that the data format is application/json; charset=utf-8 (see previous image) using the content-type header.
+
+We can finally begin using the data fetched from the server.
+
+```js
+import React from 'react'
+import ReactDOM from 'react-dom'
+import App from './App'
+
+import axios from 'axios'
+
+axios.get('http://localhost:3001/notes').then(response => {
+  const notes = response.data
+  ReactDOM.render(
+    <App notes={notes} />,
+    document.getElementById('root')
+  )
+})
+```
+This method could be acceptable in some circumstances, but it's somewhat problematic. Let's instead move the fetching of the data into the App component.
+
+
