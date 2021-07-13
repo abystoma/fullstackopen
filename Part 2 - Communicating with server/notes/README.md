@@ -254,3 +254,15 @@ useEffect(() => {
 
 It isn't usually necessary to assign functions and promises to variables, and a more compact way of representing things, as seen further above, is sufficient.
 
+## The development runtime environment
+
+![image](https://i.imgur.com/V6cs8CW.png)
+
+1. The JavaScript code making up our React application is run in the browser. 
+2. The browser gets the JavaScript from the React dev server, which is the application that runs after running the command npm start.
+3. The dev-server transforms the JavaScript into a format understood by the browser. Among other things, it stitches together JavaScript from different files into one file.
+
+4. The React application running in the browser fetches the JSON formatted data from json-server running on port 3001 on the machine.
+5. The server we query the data from - json-server - gets its data from the file db.json.
+
+
