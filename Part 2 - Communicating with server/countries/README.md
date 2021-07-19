@@ -4,7 +4,7 @@ Create a .env file in the root folder. Then write:
 REACT_APP_API_KEY=t0p53cr3t4p1k3yv4lu3
 ```
 
-##Checking api key
+## Checking api key
 ```
 echo $Env:REACT_APP_API_KEY 
 ```
