@@ -35,7 +35,7 @@ const App = () => {
       handleSearch={handleSearch}
       search={search} handleSearchChange={handleSearchChange}
       />
-      <Countries countries={countries} search={search} />
+      <Countries countries={countries} search={search}  setSearch={setSearch} />
     </div>
   );
 };
