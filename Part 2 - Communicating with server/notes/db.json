@@ -21,7 +21,7 @@
     {
       "content": "POST is used to add data to a REST api",
       "date": "2021-07-21T14:33:32.075Z",
-      "important": false,
+      "important": true,
       "id": 4
     }
   ]
