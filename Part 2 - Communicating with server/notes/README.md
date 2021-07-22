@@ -625,6 +625,8 @@ Removing an already deleted note from the application's state is done with the a
 notes.filter(n => n.id !== id)
 ```
 
+# Adding styles to React App
 
+[click here](https://fullstackopen.com/en/part2/adding_styles_to_react_app#inline-styles)
 
 
