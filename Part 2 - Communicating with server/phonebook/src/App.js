@@ -24,11 +24,16 @@ const App = () => {
       window.alert(`${newName.trim()} is already added to phonebook`);
       return;
     } 
+    const newPerson = { name: newName, number: newNumber }
+
+    axios.post('http://localhost:3001/persons', newPerson).then(res => {
+      oldPersons.push(res.data);
+      setPersons(oldPersons)
+      setNewName('')
+      setNewNumber('')
+    })
   
-    oldPersons.push({name: newName, number: newNumber});
-    setPersons(oldPersons);
-    setNewName("");
-    setNewNumber("");
+
     
   };
   const handleFilter = (event) => {
