@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import Person from './components/Persons'
 import axios from 'axios'
-import noteService from './services/persons'
+import personService from './services/personService'
+
+
 
 const App = () => {
   const [ persons, setPersons ] = useState([]) 
@@ -11,7 +13,7 @@ const App = () => {
   const [ filteredPersons, setFilteredPersons ] = useState([])
 
   useEffect(() => {
-    noteService.getAll().then(initialPersons  => setPersons(initialPersons ))
+    personService.getAll().then(initialPersons  => setPersons(initialPersons ))
   }, [])
   const handleAddName = (event) => {
     let oldPersons = [...persons];
@@ -26,7 +28,7 @@ const App = () => {
       return;
     } 
     const newPerson = {name: newName, number: newNumber}
-    noteService.create(newPerson).then(res => {
+    personService.create(newPerson).then(res => {
       oldPersons.push(res);
       setPersons(oldPersons)
       setNewName('')
@@ -44,6 +46,14 @@ const App = () => {
       setFilterPersons(false)
     }
   }
+  const handleDelete = ({ id, name }) => {
+    if (window.confirm(`Are you sure, you want to delete ${name}?`)) {
+      personService.delete(id).then(() => {
+        const updatedPerson = persons.filter((person) => person.id !== id);
+        setPersons(updatedPerson);
+      });
+    }
+  };
   return (
     <div>
       <h2>Phonebook</h2>
@@ -74,8 +84,8 @@ const App = () => {
       { /*<div>debug: {newName}</div> */}
       <h2>Numbers</h2>
       {filterPersons === false
-        ? persons.map(person => (<Person key={person.name} person={person}/>))
-        : filteredPersons.map(person => (<Person key={person.name} person = {person}/>))}
+        ? persons.map(person => (<Person key={person.name} person={person} handleDelete={handleDelete}/>))
+        : filteredPersons.map(person => (<Person key={person.name} person = {person} handleDelete={handleDelete}/>))}
       </div>
     )
 
