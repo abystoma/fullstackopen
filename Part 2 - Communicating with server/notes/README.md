@@ -511,5 +511,120 @@ The modified `getAll` function still returns a promise, as the `then` method of 
 
 After defining the parameter of the `then` method to directly return response.data, we have gotten the `getAll` function to work like we wanted it to. When the HTTP request is successful, the promise returns the data sent back in the response from the backend.
 
+## Cleaner Syntax for Defining Object Literals
+
+The module defining note related services currently exports an object with the properties getAll, create and update that are assigned to functions for handling notes.
+
+The module definition was:
+
+```js
+import axios from 'axios'
+const baseUrl = 'http://localhost:3001/notes'
+
+const getAll = () => {
+  const request = axios.get(baseUrl)
+  return request.then(response => response.data)
+}
+
+const create = newObject => {
+  const request = axios.post(baseUrl, newObject)
+  return request.then(response => response.data)
+}
+
+const update = (id, newObject) => {
+  const request = axios.put(`${baseUrl}/${id}`, newObject)
+  return request.then(response => response.data)
+}
+
+export default { 
+  getAll: getAll, 
+  create: create, 
+  update: update 
+}
+```
+
+The module exports the following, rather peculiar looking, object:
+
+```js
+{ 
+  getAll: getAll, 
+  create: create, 
+  update: update 
+}
+```
+The labels to the left of the colon in the object definition are the keys of the object, whereas the ones to the right of it are variables that are defined inside of the module.
+
+Since the names of the keys and the assigned variables are the same, we can write the object definition with more compact syntax:
+
+```js
+export default { getAll, create, update }
+```
+
+## Promises and Errors
+
+If our application allowed users to delete notes, we could end up in a situation where a user tries to change the importance of a note that has already been deleted from the system.
+
+Let's simulate this situation by making the getAll function of the note service return a "hardcoded" note that does not actually exist in the backend server:
+
+```js
+const getAll = () => {
+  const request = axios.get(baseUrl)
+  const nonExisting = {
+    id: 10000,
+    content: 'This note is not saved to server',
+    date: '2019-05-30T17:30:31.098Z',
+    important: true,
+  }
+  return request.then(response => response.data.concat(nonExisting))
+}
+```
+When we try to change the importance of the hardcoded note, we see the following error message in the console. The error says that the backend server responded to our HTTP PUT request with a status code 404 not found.
+
+![image](https://i.imgur.com/przXlAs.png)
+
+The rejection of a promise is handled by providing the then method with a second callback function, which is called in the situation where the promise is rejected.
+
+The more common way of adding a handler for rejected promises is to use the [catch](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/catch) method.
+
+In practice, the error handler for rejected promises is defined like this:
+
+```js
+axios
+  .get('http://example.com/probably_will_fail')
+  .then(response => {
+    console.log('success!')
+  })
+  .catch(error => {
+    console.log('fail')
+  })
+```
+
+If the request fails, the event handler registered with the `catch` method gets called.
+
+The `catch` method can be used to define a handler function at the end of a promise chain, which is called once any promise in the chain throws an error and the promise becomes rejected.
+
+```js
+const toggleImportanceOf = id => {
+  const note = notes.find(n => n.id === id)
+  const changedNote = { ...note, important: !note.important }
+
+  noteService
+    .update(id, changedNote).then(returnedNote => {
+      setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+    })
+    .catch(error => {
+      alert(
+        `the note '${note.content}' was already deleted from server`
+      )
+      setNotes(notes.filter(n => n.id !== id))
+    })
+}
+```
+Removing an already deleted note from the application's state is done with the array [filter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) method, which returns a new array comprising only of the items from the list for which the function that was passed as a parameter returns true for:
+```js
+notes.filter(n => n.id !== id)
+```
+
+
 
 

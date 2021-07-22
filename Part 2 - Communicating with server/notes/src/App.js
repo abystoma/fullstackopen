@@ -45,21 +45,29 @@ const App = (props) => {
     console.log(event.target.value)
     setNewNote(event.target.value)
   }
+
+  const toggleImportanceOf = id => {
+    const url = `http://localhost:3001/notes/${id}`
+    const note = notes.find(n => n.id === id)
+    const changedNote = { ...note, important: !note.important }
+  
+    noteService
+    .update(id, changedNote)
+    .then(returnedNote => {
+      setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+    })
+    .catch(error => {
+      alert(
+        `the note '${note.content}' was already deleted from server`
+      )
+      setNotes(notes.filter(n => n.id !== id))
+    })
+  }
   const notesToShow = showAll
-    ? notes
-    : notes.filter(note => note.important === true)
-      //:notes.filter(note => note.important)
-      const toggleImportanceOf = id => {
-        const url = `http://localhost:3001/notes/${id}`
-        const note = notes.find(n => n.id === id)
-        const changedNote = { ...note, important: !note.important }
-      
-        noteService
-        .update(id, changedNote)
-        .then(returnedNote => {
-          setNotes(notes.map(note => note.id !== id ? note : returnedNote))
-        })
-      }
+  ? notes
+  : notes.filter(note => note.important === true)
+    //:notes.filter(note => note.important)
+    
   return (
     <div>
       <h1>Notes</h1>
