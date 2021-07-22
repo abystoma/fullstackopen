@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import Person from './components/Persons'
-import axios from 'axios'
 import personService from './services/personService'
 
 
@@ -15,19 +14,31 @@ const App = () => {
   useEffect(() => {
     personService.getAll().then(initialPersons  => setPersons(initialPersons ))
   }, [])
+
   const handleAddName = (event) => {
     let oldPersons = [...persons];
+    const personsNames = persons.map((person) => person.name)
+    const newPerson = {name: newName, number: newNumber}
+
     event.preventDefault();
     if (!newName || !newNumber) {
       alert("Name or Number can not be empty");
       return;
     }
-    if (oldPersons.map((person) => person.name.toLowerCase()).includes(newName.toLowerCase().trim())) {
-
-      window.alert(`${newName.trim()} is already added to phonebook`);
+    if (personsNames.includes(newName)) {
+      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+        const id = persons.filter((person) => person.name === newName)[0].id
+        personService
+        .update(id, newPerson)
+        .then((newPerson) => {
+          const newPersons = persons
+            .filter((person) => person.name !== newPerson.name)
+            .concat(newPerson)
+          setPersons(newPersons)
+        })
+      }
       return;
-    } 
-    const newPerson = {name: newName, number: newNumber}
+    }
     personService.create(newPerson).then(res => {
       oldPersons.push(res);
       setPersons(oldPersons)

@@ -16,9 +16,14 @@ const removePerson = (id) => {
     return request.then((response) => response.data);
   };
 
+const updatePerson = (id, person) => {
+  const request = axios.put(`${baseUrl}/${id}`, person)
+  return request.then((response) => response.data)
+}
   export default {
     getAll: getAll,
     create: create,
     delete: removePerson,
+    update: updatePerson 
   };
   
