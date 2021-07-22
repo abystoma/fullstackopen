@@ -51,8 +51,6 @@ const App = () => {
     personService.create(newPerson).then(res => {
       oldPersons.push(res);
       setPersons(oldPersons)
-      setNewName('')
-      setNewNumber('')
       setNotification({
         message:`updated ${newPerson.name}`,
         type:"success"
@@ -61,6 +59,15 @@ const App = () => {
         setNotification(null) 
       }, 5000)
     })
+    .catch(error => {
+      setNotification({
+        message: `Information of ${newPerson.name} has already been removed from server`,
+        type:'error'
+      })
+      setPersons(persons.filter(person => person.id !== newPerson.id))
+    })
+    setNewName('')
+    setNewNumber('')
   };
 
  
