@@ -45,12 +45,17 @@ const App = () => {
             setNotification(null) 
           }, 5000)
         })
+        .catch(() => {
+          handleDeleteError(newName)
+        })
       }
       return;
     }
     personService.create(newPerson).then(res => {
       oldPersons.push(res);
       setPersons(oldPersons)
+      setNewName('')
+      setNewNumber('')
       setNotification({
         message:`updated ${newPerson.name}`,
         type:"success"
@@ -59,18 +64,24 @@ const App = () => {
         setNotification(null) 
       }, 5000)
     })
-    .catch(error => {
-      setNotification({
-        message: `Information of ${newPerson.name} has already been removed from server`,
-        type:'error'
-      })
-      setPersons(persons.filter(person => person.id !== newPerson.id))
-    })
-    setNewName('')
-    setNewNumber('')
+ 
+    
   };
 
- 
+  const handleDeleteError = (name) => {
+    console.log("error in deleting name")
+    setNotification({
+      message:`${name}'s information was already deleted from server`,
+      type:"error"
+    })
+    setTimeout(() => {setNotification(null)}, 5000)
+    personService
+      .getAll()
+      .then(initialNotes => {
+        setPersons(initialNotes)
+        })
+  }
+
 
   const handleFilter = (event) => {
     if(event.target.value !== '') {
