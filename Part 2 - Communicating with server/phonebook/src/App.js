@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Person from './components/Persons'
 import axios from 'axios'
+import noteService from './services/persons'
 
 const App = () => {
   const [ persons, setPersons ] = useState([]) 
@@ -10,7 +11,7 @@ const App = () => {
   const [ filteredPersons, setFilteredPersons ] = useState([])
 
   useEffect(() => {
-    axios.get('http://localhost:3001/persons').then(res => setPersons(res.data))
+    noteService.getAll().then(initialPersons  => setPersons(initialPersons ))
   }, [])
   const handleAddName = (event) => {
     let oldPersons = [...persons];
@@ -24,18 +25,17 @@ const App = () => {
       window.alert(`${newName.trim()} is already added to phonebook`);
       return;
     } 
-    const newPerson = { name: newName, number: newNumber }
-
-    axios.post('http://localhost:3001/persons', newPerson).then(res => {
-      oldPersons.push(res.data);
+    const newPerson = {name: newName, number: newNumber}
+    noteService.create(newPerson).then(res => {
+      oldPersons.push(res);
       setPersons(oldPersons)
       setNewName('')
       setNewNumber('')
     })
-  
-
-    
   };
+
+ 
+
   const handleFilter = (event) => {
     if(event.target.value !== '') {
       setFilterPersons(true)
@@ -74,10 +74,11 @@ const App = () => {
       { /*<div>debug: {newName}</div> */}
       <h2>Numbers</h2>
       {filterPersons === false
-      ? persons.map(person => (<Person key={person.name} person={person}/>))
-      : filteredPersons.map(person => (<Person key={person.name} person = {person}/>))}
+        ? persons.map(person => (<Person key={person.name} person={person}/>))
+        : filteredPersons.map(person => (<Person key={person.name} person = {person}/>))}
       </div>
     )
 
-    };
+};
 export default App;
+
