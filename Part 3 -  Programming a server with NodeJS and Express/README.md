@@ -487,6 +487,9 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 ```
 
+# Deploying app to internet
+Next let's connect the frontend we made in part 2 to our own backend.
+
 
 
 
