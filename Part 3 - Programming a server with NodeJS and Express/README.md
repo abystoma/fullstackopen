@@ -998,3 +998,71 @@ app.get('/api/notes', (request, response) => {
 Now the `notes` variable is assigned to an array of objects returned by Mongo. When the response is sent in the JSON format, the `toJSON` method of each object in the array is called automatically by the [JSON.stringify](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify) method.
 
 
+## Database configuration into its own module
+Before we refactor the rest of the backend to use the database, let's extract the Mongoose specific code into its own module.
+
+Let's create a new directory for the module called *models*, and add a file called *note.js*:
+
+Defining Node [modules](https://nodejs.org/docs/latest-v8.x/api/modules.html) differs slightly from the way of defining [ES6 modules](https://fullstackopen.com/en/part2/rendering_a_collection_modules#refactoring-modules) in part 2.
+
+The public interface of the module is defined by setting a value to the `module.exports` variable. We will set the value to be the *Note* model. The other things defined inside of the module, like the variables `mongoose` and `url` will not be accessible or visible to users of the module.
+
+Importing the module happens by adding the following line to `index.js`:
+```js
+const Note = require('./models/note')
+```
+This way the `Note` variable will be assigned to the same object that the module defines.
+The way that the connection is made has changed slightly:
+
+```js
+const url = process.env.MONGODB_URI
+
+console.log('connecting to', url)
+
+mongoose.connect(url)
+  .then(result => {
+    console.log('connected to MongoDB')
+  })
+  .catch((error) => {
+    console.log('error connecting to MongoDB:', error.message)
+  })
+```
+It's not a good idea to hardcode the address of the database into the code, so instead the address of the database is passed to the application via the `MONGODB_URI` environment variable.
+
+There are many ways to define the value of an environment variable. One way would be to define it when the application is started:
+
+A more sophisticated way is to use the [dotenv](https://github.com/motdotla/dotenv#readme) library. You can install the library with the command:
+
+```
+npm install dotenv
+```
+
+To use the library, we create a .env file at the root of the project. The environment variables are defined inside of the file, and it can look like this:
+
+```
+MONGODB_URI='mongodb+srv://fullstack:sekred@cluster0-ostce.mongodb.net/note-app?retryWrites=true'
+PORT=3001
+```
+We also added the hardcoded port of the server into the `PORT` environment variable.
+
+**The *.env* file should be gitignored right away, since we do not want to publish any confidential information publicly online!**
+The environment variables defined in the .env file can be taken into use with the expression` require('dotenv').config()` and you can reference them in your code just like you would reference normal environment variables, with the familiar `process.env.MONGODB_URI` syntax.
+
+Let's change the *index.js* file in the following way:
+
+```js
+require('dotenv').config()
+const express = require('express')
+const app = express()
+const Note = require('./models/note')
+
+// ..
+
+const PORT = process.env.PORT
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
+```
+
+It's important that *dotenv* gets imported before the *note* model is imported. This ensures that the environment variables from the *.env* file are available globally before the code from the other modules is imported.
+
