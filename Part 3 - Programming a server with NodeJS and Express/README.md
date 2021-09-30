@@ -1123,3 +1123,78 @@ Only once everything has been verified to work in the backend, is it a good idea
 It's probably a good idea to integrate the frontend and backend one functionality at a time. First, we could implement fetching all of the notes from the database and test it through the backend endpoint in the browser. After this, we could verify that the frontend works with the new backend. Once everything seems to work, we would move onto the next feature.
 
 Once we introduce a database into the mix, it is useful to inspect the state persisted in the database, e.g. from the control panel in MongoDB Atlas. Quite often little Node helper programs like the mongo.js program we wrote earlier can be very helpful during development.
+
+## Error handling
+
+If we try to visit the URL of a note with an id that does not actually exist e.g. http://localhost:3001/api/notes/5c41c90e84d891c15dfa3431 where 5c41c90e84d891c15dfa3431 is not an id stored in the database, then the response will be `null`.
+
+Let's change this behavior so that if note with the given id doesn't exist, the server will respond to the request with the HTTP status code 404 not found. In addition let's implement a simple `catch` block to handle cases where the promise returned by the `findById` method is rejected:
+
+```js
+app.get('/api/notes/:id', (request, response) => {
+  Note.findById(request.params.id)
+    .then(note => {
+      if (note) {
+        response.json(note)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => {
+      console.log(error)
+      response.status(500).end()
+    })
+})
+```
+If no matching object is found in the database, the value of `note` will be `null` and the `else` block is executed. This results in a response with the status code 404 not found. If promise returned by the `findById` method is rejected, the response will have the status code 500 internal server error. The console displays more detailed information about the error.
+
+On top of the non-existing note, there's one more error situation needed to be handled. In this situation, we are trying to fetch a note with a wrong kind of `id`, meaning an `id` that doesn't match the mongo identifier format.
+
+If we make the following request, we will get the error message shown below:
+```
+Method: GET
+Path:   /api/notes/someInvalidId
+Body:   {}
+---
+{ CastError: Cast to ObjectId failed for value "someInvalidId" at path "_id"
+    at CastError (/Users/mluukkai/opetus/_fullstack/osa3-muisiinpanot/node_modules/mongoose/lib/error/cast.js:27:11)
+    at ObjectId.cast (/Users/mluukkai/opetus/_fullstack/osa3-muisiinpanot/node_modules/mongoose/lib/schema/objectid.js:158:13)
+    ...
+```
+
+Given malformed id as an argument, the `findById` method will throw an error causing the returned promise to be rejected. This will cause the callback function defined in the `catch` block to be called.
+
+Let's make some small adjustments to the response in the catch block:
+
+```js
+app.get('/api/notes/:id', (request, response) => {
+  Note.findById(request.params.id)
+    .then(note => {
+      if (note) {
+        response.json(note)
+      } else {
+        response.status(404).end() 
+      }
+    })
+    .catch(error => {
+      console.log(error)
+      response.status(400).send({ error: 'malformatted id' })
+    })
+})
+```
+If the format of the id is incorrect, then we will end up in the error handler defined in the `catch` block. The appropriate status code for the situation is 400 Bad Request, because the situation fits the description perfectly:
+*The request could not be understood by the server due to malformed syntax. The client SHOULD NOT repeat the request without modifications.*
+
+We have also added some data to the response to shed some light on the cause of the error.
+
+When dealing with Promises, it's almost always a good idea to add error and exception handling, because otherwise you will find yourself dealing with strange bugs.
+
+It's never a bad idea to print the object that caused the exception to the console in the error handler.
+
+The reason the error handler gets called might be something completely different than what you had anticipated. If you log the error to the console, you may save yourself from long and frustrating debugging sessions. Moreover, most modern services to where you deploy your application support some form of logging system that you can use to check these logs. As mentioned, Heroku is one.
+
+Every time you're working on a project with a backend, *it is critical to keep an eye on the console output of the backend*. If you are working on a small screen, it is enough to just see a tiny slice of the output in the background. Any error messages will catch your attention even when the console is far back in the background:
+
+
+![image](https://i.imgur.com/6w2w4p8.png)
+
