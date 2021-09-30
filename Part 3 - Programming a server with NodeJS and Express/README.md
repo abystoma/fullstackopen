@@ -1240,3 +1240,107 @@ app.use(errorHandler)
 The error handler checks if the error is a CastError exception, in which case we know that the error was caused by an invalid object id for Mongo. In this situation the error handler will send a response to the browser with the response object passed as a parameter. In all other error situations, the middleware passes the error forward to the default Express error handler.
 
 Note that the error handling middleware has to be the last loaded middleware!
+
+## The order of middleware loading
+
+The execution order of middleware is the same as the order that they are loaded into express with the `app.use` function. For this reason it is important to be careful when defining middleware.
+
+The correct order is the following:
+
+```js
+app.use(express.static('build'))
+app.use(express.json())
+app.use(requestLogger)
+
+app.post('/api/notes', (request, response) => {
+  const body = request.body
+  // ...
+})
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+// handler of requests with unknown endpoint
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  // ...
+}
+
+// handler of requests with result to errors
+app.use(errorHandler)
+```
+The json-parser middleware should be among the very first middleware loaded into Express. If the order was the following:
+
+```js
+app.use(requestLogger) // request.body is undefined!
+
+app.post('/api/notes', (request, response) => {
+  // request.body is undefined!
+  const body = request.body
+  // ...
+})
+
+app.use(express.json())
+```
+Then the JSON data sent with the HTTP requests would not be available for the logger middleware or the POST route handler, since the `request.body` would be `undefined` at that point.
+
+It's also important that the middleware for handling unsupported routes is next to the last middleware that is loaded into Express, just before the error handler.
+
+For example, the following loading order would cause an issue:
+```js
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+// handler of requests with unknown endpoint
+app.use(unknownEndpoint)
+
+app.get('/api/notes', (request, response) => {
+  // ...
+})
+```
+
+Now the handling of unknown endpoints is ordered *before the HTTP request handler*. Since the unknown endpoint handler responds to all requests with *404 unknown endpoint*, no routes or middleware will be called after the response has been sent by unknown endpoint middleware. The only exception to this is the error handler which needs to come at the very end, after the unknown endpoints handler.
+
+## Other operations
+Let's add some missing functionality to our application, including deleting and updating an individual note.
+
+The easiest way to delete a note from the database is with the [findByIdAndRemove](https://mongoosejs.com/docs/api.html#model_Model.findByIdAndRemove) method:
+```js
+app.delete('/api/notes/:id', (request, response, next) => {
+  Note.findByIdAndRemove(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
+})
+```
+In both of the "successful" cases of deleting a resource, the backend responds with the status code 204 no content. The two different cases are deleting a note that exists, and deleting a note that does not exist in the database. The `result` callback parameter could be used for checking if a resource actually was deleted, and we could use that information for returning different status codes for the two cases if we deemed it necessary. Any exception that occurs is passed onto the error handler.
+
+The toggling of the importance of a note can be easily accomplished with the findByIdAndUpdate method.
+
+```js
+app.put('/api/notes/:id', (request, response, next) => {
+  const body = request.body
+
+  const note = {
+    content: body.content,
+    important: body.important,
+  }
+
+  Note.findByIdAndUpdate(request.params.id, note, { new: true })
+    .then(updatedNote => {
+      response.json(updatedNote)
+    })
+    .catch(error => next(error))
+})
+```
+In the code above, we also allow the content of the note to be edited. However, we will not support changing the creation date for obvious reasons.
+
+Notice that the `findByIdAndUpdate` method receives a regular JavaScript object as its parameter, and not a new note object created with the `Note` constructor function.
+
+There is one important detail regarding the use of the `findByIdAndUpdate` method. By default, the `updatedNote` parameter of the event handler receives the original document [without the modifications](https://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate). We added the optional `{ new: true }`parameter, which will cause our event handler to be called with the new modified document instead of the original.
+
+After testing the backend directly with Postman and the VS Code REST client, we can verify that it seems to work. The frontend also appears to work with the backend using the database.
