@@ -1198,3 +1198,45 @@ Every time you're working on a project with a backend, *it is critical to keep a
 
 ![image](https://i.imgur.com/6w2w4p8.png)
 
+## Moving error handling into middleware
+
+We have written the code for the error handler among the rest of our code. This can be a reasonable solution at times, but there are cases where it is better to implement all error handling in a single place. This can be particularly useful if we later on want to report data related to errors to an external error tracking system like [Sentry](https://sentry.io/welcome/).
+
+Let's change the handler for the */api/notes/:id* route, so that it passes the error forward with the next function. The next function is passed to the handler as the third parameter:
+
+```js
+app.get('/api/notes/:id', (request, response, next) => {
+  Note.findById(request.params.id)
+    .then(note => {
+      if (note) {
+        response.json(note)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
+})
+```
+
+The error that is passed forwards is given to the `next` function as a parameter. If `next` was called without a parameter, then the execution would simply move onto the next route or middleware. If the `next` function is called with a parameter, then the execution will continue to the *error handler middleware*.
+
+Express [error handlers](https://expressjs.com/en/guide/error-handling.html) are middleware that are defined with a function that accepts four parameters. Our error handler looks like this:
+
+```js
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } 
+
+  next(error)
+}
+
+// this has to be the last loaded middleware.
+app.use(errorHandler)
+```
+
+The error handler checks if the error is a CastError exception, in which case we know that the error was caused by an invalid object id for Mongo. In this situation the error handler will send a response to the browser with the response object passed as a parameter. In all other error situations, the middleware passes the error forward to the default Express error handler.
+
+Note that the error handling middleware has to be the last loaded middleware!
