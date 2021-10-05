@@ -40,6 +40,11 @@ app.get('/api/persons/:id', (request, response) => {
         response.status(404).end()
     }
 })
+app.get('/info', (request, response) => {
+      const content = `<p>Phonebook has info for ${persons.length} people</p>
+      <p>${new Date().toString()}</p>`
+      response.send(content)
+  })
 
 const PORT = 3001
 app.listen(PORT, () => {
