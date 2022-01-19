@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --verbose",
     "build:ui": "rm -rf build && cd ../../Part2/notes && npm run build --prod && cp -r build ../../Part3/notes",
     "deploy": "git push heroku main",
     "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push && npm run deploy",
@@ -23,6 +23,10 @@
   },
   "devDependencies": {
     "eslint": "^7.32.0",
+    "jest": "^27.4.7",
     "nodemon": "^2.0.13"
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }
