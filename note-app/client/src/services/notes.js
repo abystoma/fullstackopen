@@ -1,11 +1,11 @@
 import axios from 'axios'
-const baseUrl = '/api/notes'
-
-const getAll2  = () => {
-  const request = axios.get(baseUrl)
-  return request.then(response => {
-    return response.data
-})}
+// const baseUrl = '/api/notes'
+const baseUrl = 'http://localhost:3001/notes'
+// const getAll2  = () => {
+//   const request = axios.get(baseUrl)
+//   return request.then(response => {
+//     return response.data
+// })}
 
 const getAll = () => {
   const request = axios.get(baseUrl)
@@ -27,6 +27,7 @@ const update = (id, newObject) => {
   return request.then(response => response.data)
 }
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default { 
   getAll: getAll, 
   create: create, 

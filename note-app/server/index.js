@@ -45,21 +45,21 @@ app.post('/api/notes', (request, response, next) => {
     date: new Date(),
   })
 
-//   note.save()
-//     .then(savedNote => {
-//       response.json(savedNote.toJSON())
-//     })
-//     .catch(error => next(error))
-// })
+  //   note.save()
+  //     .then(savedNote => {
+  //       response.json(savedNote.toJSON())
+  //     })
+  //     .catch(error => next(error))
+  // })
   note
-  .save()
-  .then(savedNote => {
-    return savedNote.toJSON()
-  })
-  .then(savedAndFormattedNote => {
-    response.json(savedAndFormattedNote)
-  }) 
-  .catch(error => next(error)) 
+    .save()
+    .then(savedNote => {
+      return savedNote.toJSON()
+    })
+    .then(savedAndFormattedNote => {
+      response.json(savedAndFormattedNote)
+    })
+    .catch(error => next(error))
 })
 
 app.get('/api/notes/:id', (request, response, next) => {
@@ -72,7 +72,7 @@ app.get('/api/notes/:id', (request, response, next) => {
       }
     })
     .catch(error => {
-      console.log("WAT IS THIS")
+      console.log('WAT IS THIS')
       next(error)
     })
 })
