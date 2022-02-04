@@ -509,3 +509,308 @@ TEST_MONGODB_URI=mongodb+srv://fullstack:secret@cluster0-ostce.mongodb.net/note-
 ```
 The `config` module that we have implemented slightly resembles the [node-config](https://github.com/lorenwest/node-config) package. Writing our own implementation is justified since our application is simple, and also because it teaches us valuable lessons.
 
+## supertest
+Let's use the [supertest](https://github.com/visionmedia/supertest) package to help us write our tests for testing the API.
+
+Install: 
+```
+npm install --save-dev supertest
+```
+Let's write our first test in the tests/note_api.test.js file:
+
+```js
+const mongoose = require('mongoose')
+const supertest = require('supertest')
+const app = require('../app')
+
+const api = supertest(app)
+
+test('notes are returned as json', async () => {
+  await api
+    .get('/api/notes')
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+})
+
+afterAll(() => {
+  mongoose.connection.close()
+})
+```
+
+The test imports the Express application from the app.js module and wraps it with the supertest function into a so-called [superagent](https://github.com/visionmedia/superagent) object. This object is assigned to the api variable and tests can use it for making HTTP requests to the backend.
+
+Our test makes an HTTP GET request to the api/notes url and verifies that the request is responded to with the status code 200. The test also verifies that the Content-Type header is set to application/json, indicating that the data is in the desired format. (If you're not familiar with the RegEx syntax of `/application\/json/`, you can learn more [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).)
+
+The arrow function that defines the test is preceded by the async keyword and the method call for the api object is preceded by the await keyword. 
+
+Once all the tests (there is currently only one) have finished running we have to close the database connection used by Mongoose. This can be easily achieved with the [afterAll](https://jestjs.io/docs/api#afterallfn-timeout) method:
+
+```js
+afterAll(() => {
+  mongoose.connection.close()
+})
+```
+
+When running your tests you may run across the following console warning:
+![image](https://i.imgur.com/YwNfOhH.png)
+
+If this occurs, let's follow the instructions and add a jest.config.js file at the root of the project with the following content:
+
+```js
+module.exports = {
+  testEnvironment: 'node'
+}
+```
+
+Another error you may come across is your test takes longer than the default Jest test timeout of 5000 ms. This can be solved by adding a third parameter to the test function:
+
+```js
+test('notes are returned as json', async () => {
+  await api
+    .get('/api/notes')
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+}, 100000)
+```
+
+This third parameter sets the timeout to be 100000 ms. A long timeout ensures that our test won't fail due to the time it takes to run. (A long timeout may not be what you want for tests based on performance or speed, but this is fine for our example tests).
+
+One tiny but important detail: at the beginning of this part we extracted the Express application into the app.js file, and the role of the index.js file was changed to launch the application at the specified port with Node's built-in http object:
+
+```js
+const app = require('./app') // the actual Express app
+const http = require('http')
+const config = require('./utils/config')
+const logger = require('./utils/logger')
+
+const server = http.createServer(app)
+
+server.listen(config.PORT, () => {
+  logger.info(`Server running on port ${config.PORT}`)
+})
+```
+
+The tests only use the express application defined in the app.js file:
+
+```js
+const mongoose = require('mongoose')
+const supertest = require('supertest')
+const app = require('../app')
+
+const api = supertest(app)
+
+// ...
+```
+
+The documentation for supertest says the following:
+
+*if the server is not already listening for connections then it is bound to an ephemeral port for you so there is no need to keep track of ports.*
+
+In other words, supertest takes care that the application being tested is started at the port that it uses internally.
+
+Let's write a few more tests:
+
+```js
+test('there are two notes', async () => {
+  const response = await api.get('/api/notes')
+
+  expect(response.body).toHaveLength(2)
+})
+
+test('the first note is about HTTP methods', async () => {
+  const response = await api.get('/api/notes')
+
+  expect(response.body[0].content).toBe('HTML is easy')
+})
+```
+
+Both tests store the response of the request to the `response` variable, and unlike the previous test that used the methods provided by `supertest` for verifying the status code and headers, this time we are inspecting the response data stored in response.body property. Our tests verify the format and content of the response data with the expect method of Jest.
+
+The middleware that outputs information about the HTTP requests is obstructing the test execution output. Let us modify the logger so that it does not print to console in test mode:
+
+```js
+const info = (...params) => {
+  if (process.env.NODE_ENV !== 'test') { 
+    console.log(...params)
+  }
+}
+
+const error = (...params) => {
+  if (process.env.NODE_ENV !== 'test') { 
+    console.error(...params)
+  }
+}
+
+module.exports = {
+  info, error
+}
+```
+
+## Initializing the database before tests
+
+Testing appears to be easy and our tests are currently passing. However, our tests are bad as they are dependent on the state of the database (that happens to be correct in my test database). In order to make our tests more robust, we have to reset the database and generate the needed test data in a controlled manner before we run the tests.
+
+Our tests are already using the afterAll function of Jest to close the connection to the database after the tests are finished executing. Jest offers many other [functions](https://jestjs.io/docs/setup-teardown) that can be used for executing operations once before any test is run, or every time before a test is run.
+
+Let's initialize the database before every test with the beforeEach function:
+
+```js
+const mongoose = require('mongoose')
+const supertest = require('supertest')
+const app = require('../app')
+const api = supertest(app)
+const Note = require('../models/note')
+const initialNotes = [
+  {
+    content: 'HTML is easy',
+    date: new Date(),
+    important: false,
+  },
+  {
+    content: 'Browser can execute only Javascript',
+    date: new Date(),
+    important: true,
+  },
+]
+beforeEach(async () => {
+  await Note.deleteMany({})
+  let noteObject = new Note(initialNotes[0])
+  await noteObject.save()
+  noteObject = new Note(initialNotes[1])
+  await noteObject.save()
+})
+// ...
+```
+The database is cleared out at the beginning, and after that we save the two notes stored in the initialNotes array to the database. Doing this, we ensure that the database is in the same state before every test is run.
+
+Let's also make the following changes to the last two tests:
+
+```js
+test('all notes are returned', async () => {
+  const response = await api.get('/api/notes')
+
+  expect(response.body).toHaveLength(initialNotes.length)
+})
+
+test('a specific note is within the returned notes', async () => {
+  const response = await api.get('/api/notes')
+
+  const contents = response.body.map(r => r.content)
+  expect(contents).toContain(
+    'Browser can execute only Javascript'
+  )
+})
+```
+
+Pay special attention to the expect in the latter test. The response.body.map(r => r.content)command is used to create an array containing the content of every note returned by the API. The `toContain` method is used for checking that the note given to it as a parameter is in the list of notes returned by the API.
+
+## Running tests one by one
+
+The npm test command executes all of the tests of the application. When we are writing tests, it is usually wise to only execute one or two tests. Jest offers a few different ways of accomplishing this, one of which is the only method. If tests are written across many files, this method is not great.
+
+A better option is to specify the tests that need to be run as parameter of the npm test command.
+
+The following command only runs the tests found in the tests/note_api.test.js file:
+
+```
+npm test -- tests/note_api.test.js
+```
+
+The -t option can be used for running tests with a specific name:
+
+```
+npm test -- -t "a specific note is within the returned notes"
+```
+
+The provided parameter can refer to the name of the test or the describe block. The parameter can also contain just a part of the name. The following command will run all of the tests that contain notes in their name:
+
+```
+npm test -- -t 'notes'
+```
+
+NB: When running a single test, the mongoose connection might stay open if no tests using the connection are run. The problem might be due to the fact that supertest primes the connection, but Jest does not run the afterAll portion of the code.
+
+## async/await
+The async/await syntax that was introduced in ES7 makes it possible to use asynchronous functions that return a promise in a way that makes the code look synchronous.
+
+As an example, the fetching of notes from the database with promises looks like this:
+
+```js
+Note.find({}).then(notes => {
+  console.log('operation returned the following notes', notes)
+})
+```
+
+The `Note.find()` method returns a promise and we can access the result of the operation by registering a callback function with the `then` method.
+
+All of the code we want to execute once the operation finishes is written in the callback function. If we wanted to make several asynchronous function calls in sequence, the situation would soon become painful. The asynchronous calls would have to be made in the callback. This would likely lead to complicated code and could potentially give birth to a so-called [callback hell](http://callbackhell.com/).
+
+By [chaining promises](https://javascript.info/promise-chaining) we could keep the situation somewhat under control, and avoid callback hell by creating a fairly clean chain of then method calls. We have seen a few of these during the course. To illustrate this, you can view an artificial example of a function that fetches all notes and then deletes the first one:
+
+```js
+Note.find({})
+  .then(notes => {
+    return notes[0].remove()
+  })
+  .then(response => {
+    console.log('the first note is removed')
+    // more code here
+  })
+```
+The then-chain is alright, but we can do better. The [generator functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) introduced in ES6 provided a [clever way](https://github.com/getify/You-Dont-Know-JS/blob/1st-ed/async%20%26%20performance/ch4.md#iterating-generators-asynchronously) of writing asynchronous code in a way that "looks synchronous". The syntax is a bit clunky and not widely used.
+
+The async and await keywords introduced in ES7 bring the same functionality as the generators, but in an understandable and syntactically cleaner way to the hands of all citizens of the JavaScript world.
+
+We could fetch all of the notes in the database by utilizing the [await](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await) operator like this:
+
+```js
+const notes = await Note.find({})
+
+console.log('operation returned the following notes', notes)
+```
+
+The code looks exactly like synchronous code. The execution of code pauses at `const notes = await Note.find({})` and waits until the related promise is fulfilled, and then continues its execution to the next line. When the execution continues, the result of the operation that returned a promise is assigned to the `notes` variable.
+The slightly complicated example presented above could be implemented by using await like this:
+
+```js
+const notes = await Note.find({})
+const response = await notes[0].remove()
+
+console.log('the first note is removed')
+```
+
+Thanks to the new syntax, the code is a lot simpler than the previous then-chain.
+
+There are a few important details to pay attention to when using async/await syntax. In order to use the await operator with asynchronous operations, they have to return a promise. This is not a problem as such, as regular asynchronous functions using callbacks are easy to wrap around promises.
+
+The await keyword can't be used just anywhere in JavaScript code. Using await is possible only inside of an async function.
+
+This means that in order for the previous examples to work, they have to be using async functions. Notice the first line in the arrow function definition:
+
+```js
+const main = async () => {
+  const notes = await Note.find({})
+  console.log('operation returned the following notes', notes)
+
+  const response = await notes[0].remove()
+  console.log('the first note is removed')
+}
+
+main()
+```
+
+The code declares that the function assigned to `main` is asynchronous. After this the code calls the function with `main()`.
+
+## async/await in the backend
+
+Let's change the backend to async and await. As all of the asynchronous operations are currently done inside of a function, it is enough to change the route handler functions into async functions.
+
+The route for fetching all notes gets changed to the following:
+
+```js
+notesRouter.get('/', async (request, response) => { 
+  const notes = await Note.find({})
+  response.json(notes)
+})
+```
+We can verify that our refactoring was successful by testing the endpoint through the browser and by running the tests that we wrote earlier.
