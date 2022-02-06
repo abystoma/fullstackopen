@@ -172,3 +172,182 @@ const noteSchema = new mongoose.Schema({
 
 In stark contrast to the conventions of relational databases, references are now stored in both documents: the note references the user who created it, and the user has an array of references to all of the notes created by them.
 
+## Creating users
+
+Let's implement a route for creating new users. Users have a unique username, a name and something called a passwordHash. The password hash is the output of a one-way hash function applied to the user's password. It is never wise to store unencrypted plain text passwords in the database!
+
+Let's install the bcrypt package for generating the password hashes:
+
+```npm install bcrypt```
+
+Let's define a separate router for dealing with users in a new controllers/users.js file. Let's take the router into use in our application in the app.js file, so that it handles requests made to the /api/users url:
+
+```js
+const usersRouter = require('./controllers/users')
+
+// ...
+
+app.use('/api/users', usersRouter)
+```
+The contents of the file that defines the router are as follows:
+
+```js
+const bcrypt = require('bcrypt')
+const usersRouter = require('express').Router()
+const User = require('../models/user')
+
+usersRouter.post('/', async (request, response) => {
+  const body = request.body
+
+  const saltRounds = 10
+  const passwordHash = await bcrypt.hash(body.password, saltRounds)
+
+  const user = new User({
+    username: body.username,
+    name: body.name,
+    passwordHash,
+  })
+
+  const savedUser = await user.save()
+
+  response.json(savedUser)
+})
+
+module.exports = usersRouter
+```
+The password sent in the request is not stored in the database. We store the hash of the password that is generated with the `bcrypt.hash` function.
+
+The fundamentals of [storing passwords](https://codahale.com/how-to-safely-store-a-password/) are outside the scope of this course material. We will not discuss what the magic number 10 assigned to the [saltRounds](https://github.com/kelektiv/node.bcrypt.js/#a-note-on-rounds) variable means, but you can read more about it in the linked material.
+
+Our current code does not contain any error handling or input validation for verifying that the username and password are in the desired format.
+
+The new feature can and should initially be tested manually with a tool like Postman. However testing things manually will quickly become too cumbersome, especially once we implement functionality that enforces usernames to be unique.
+
+It takes much less effort to write automated tests, and it will make the development of our application much easier.
+
+## Creating a new note
+
+The code for creating a new note has to be updated so that the note is assigned to the user who created it.
+
+Let's expand our current implementation so, that the information about the user who created a note is sent in the userId field of the request body:
+
+```js
+const User = require('../models/user')
+
+//...
+
+notesRouter.post('/', async (request, response, next) => {
+  const body = request.body
+
+  const user = await User.findById(body.userId)
+
+  const note = new Note({
+    content: body.content,
+    important: body.important === undefined ? false : body.important,
+    date: new Date(),
+    user: user._id
+  })
+
+  const savedNote = await note.save()
+  user.notes = user.notes.concat(savedNote._id)
+  await user.save()
+  
+  response.json(savedNote)
+})
+```
+It's worth noting that the user object also changes. The id of the note is stored in the notes field:
+
+```js
+const user = await User.findById(body.userId)
+
+// ...
+
+user.notes = user.notes.concat(savedNote._id)
+await user.save()
+```
+Let's try to create a new note
+
+![image](https://i.imgur.com/WlB0Hfb.png)
+The operation appears to work. Let's add one more note and then visit the route for fetching all users:
+![image](https://i.imgur.com/quQmUrm.png)
+
+We can see that the user has two notes.
+
+Likewise, the ids of the users who created the notes can be seen when we visit the route for fetching all notes:
+![image](https://imgur.com/3fLmnGG.png)
+
+## Populate
+
+We would like our API to work in such a way, that when an HTTP GET request is made to the /api/users route, the user objects would also contain the contents of the user's notes, and not just their id. In a relational database, this functionality would be implemented with a join query.
+
+As previously mentioned, document databases do not properly support join queries between collections, but the Mongoose library can do some of these joins for us. Mongoose accomplishes the join by doing multiple queries, which is different from join queries in relational databases which are transactional, meaning that the state of the database does not change during the time that the query is made. With join queries in Mongoose, nothing can guarantee that the state between the collections being joined is consistent, meaning that if we make a query that joins the user and notes collections, the state of the collections may change during the query.
+
+The Mongoose join is done with the [populate](https://mongoosejs.com/docs/populate.html) method. Let's update the route that returns all users first:
+
+```js
+usersRouter.get('/', async (request, response) => {
+  const users = await User
+    .find({}).populate('notes')
+
+  response.json(users)
+})
+```
+
+The populate method is chained after the find method making the initial query. The parameter given to the populate method defines that the ids referencing note objects in the notes field of the user document will be replaced by the referenced note documents.
+
+The result is almost exactly what we wanted:
+
+![image](https://i.imgur.com/FjxxUsy.png)
+
+We can use the populate parameter for choosing the fields we want to include from the documents. The selection of fields is done with the Mongo [syntax](https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only):
+
+```js
+usersRouter.get('/', async (request, response) => {
+  const users = await User
+    .find({}).populate('notes', { content: 1, date: 1 })
+
+  response.json(users)
+});
+```
+The result is now exactly like we want it to be:
+
+![image](https://i.imgur.com/qsscV1Y.png)
+
+Let's also add a suitable population of user information to notes:
+
+```js
+notesRouter.get('/', async (request, response) => {
+  const notes = await Note
+    .find({}).populate('user', { username: 1, name: 1 })
+
+  response.json(notes)
+});
+```
+Now the user's information is added to the user field of note objects.
+
+![image](https://i.imgur.com/Mm2WeNJ.png)
+
+It's important to understand that the database does not actually know that the ids stored in the user field of notes reference documents in the user collection.
+
+The functionality of the populate method of Mongoose is based on the fact that we have defined "types" to the references in the Mongoose schema with the ref option:
+
+```js
+const noteSchema = new mongoose.Schema({
+  content: {
+    type: String,
+    required: true,
+    minlength: 5
+  },
+  date: Date,
+  important: Boolean,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
+})
+```
+
+
+
+
+
