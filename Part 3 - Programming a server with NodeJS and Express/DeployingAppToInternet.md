@@ -251,3 +251,8 @@ After a restart, the React development environment will work as a proxy. If the 
 Now the frontend is also fine, working with the server both in development- and production mode.
 
 A negative aspect of our approach is how complicated it is to deploy the frontend. Deploying a new version requires generating new production build of the frontend and copying it to the backend repository. This makes creating an automated deployment pipeline more difficult. Deployment pipeline means an automated and controlled way to move the code from the computer of the developer through different tests and quality checks to the production environment.
+
+## Adding mongodb to heroku
+```
+heroku config:set MONGODB_URI="mongodb+srv://flukehermit:z528491h@cluster0.dmrpz.mongodb.net/phonebook?retryWrites=true&w=majority"
+```
