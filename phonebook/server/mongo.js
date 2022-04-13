@@ -1,15 +1,18 @@
+require('dotenv').config()
+
 const mongoose = require('mongoose')
 
-if ( process.argv.length<3 ) {
-  console.log('give password as argument')
-  process.exit(1)
-}
+const url = process.env.MONGODB_URI
 
-const password = process.argv[2]
-
-const url = `mongodb+srv://flukehermit:${password}@cluster0.dmrpz.mongodb.net/phonebook?retryWrites=true&w=majority`
+console.log('connecting to', url)
 
 mongoose.connect(url)
+  .then(result => {
+    console.log('connected to MongoDB')
+  })
+  .catch((error) => {
+    console.log('error connecting to MongoDB:', error.message)
+  })
 
 const personchema = new mongoose.Schema({
   name: String,
@@ -19,11 +22,11 @@ const personchema = new mongoose.Schema({
 
 const Person = mongoose.model('Person', personchema)
 
-const person = new Person({
-  name: 'Zayed',
-  number: "69420",
-  id: 44,
-})
+// const person = new Person({
+//   name: 'Zayed',
+//   number: "69420",
+//   id: 44,
+// })
 
 person.save().then(result => {
   console.log('saved!')
